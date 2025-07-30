@@ -2,42 +2,52 @@ import java.util.*;
 
 public class PokerGame {
     private final List<Card> deck = Card.getStandardDeck();
-    private int playerCount;
-    private int cardsInHand;
-    private List<PokerHand> pokerHands;
+    private final int playerCount;
+    private final int cardsInHand;
+    private final List<PokerHand> pokerHands = new ArrayList<>();
     private List<Card> remainingCards;
 
     public PokerGame(int playerCount, int cardsInHand) {
         this.playerCount = playerCount;
         this.cardsInHand = cardsInHand;
-        pokerHands = new ArrayList<>(playerCount);
     }
 
     public void startPlay() {
         Collections.shuffle(deck);
         Card.printDeck(deck);
-        int rnd = new Random().nextInt(15,35);
-        Collections.rotate(deck, rnd);
+        int randomMiddle = new Random().nextInt(15, 35);
+        Collections.rotate(deck, randomMiddle);
         Card.printDeck(deck);
 
-        deal();
+        deal();   // <-- no removals from deck
         System.out.println("---------------------");
         pokerHands.forEach(PokerHand::evalHand);
         PokerHand.registerGame(pokerHands);
         pokerHands.forEach(System.out::println);
 
-        int dealt = playerCount*cardsInHand;
-        remainingCards = new ArrayList<>(deck.subList(dealt, deck.size()));
+        int dealtCards = playerCount * cardsInHand;
+        remainingCards = deck.subList(dealtCards, deck.size());
         Card.printDeck(remainingCards, "Remaining Cards", 2);
     }
 
     private void deal() {
-        for (int p=1; p<=playerCount; p++) {
-            List<Card> hand = new ArrayList<>();
-            for (int i=0; i<cardsInHand; i++) {
-                hand.add(deck.remove(0));
+        // Prepare empty hands
+        List<List<Card>> hands = new ArrayList<>(playerCount);
+        for (int p = 0; p < playerCount; p++) {
+            hands.add(new ArrayList<>(cardsInHand));
+        }
+
+        // Deal round-robin without removing from deck
+        int idx = 0;
+        for (int i = 0; i < cardsInHand; i++) {
+            for (int p = 0; p < playerCount; p++) {
+                hands.get(p).add(deck.get(idx++));
             }
-            pokerHands.add(new PokerHand(hand, p));
+        }
+
+        // Wrap into PokerHand objects
+        for (int p = 0; p < playerCount; p++) {
+            pokerHands.add(new PokerHand(hands.get(p), p + 1));
         }
     }
 }
