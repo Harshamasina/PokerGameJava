@@ -1,5 +1,4 @@
 import java.util.*;
-import java.util.function.Consumer;
 
 public class PokerGame {
     private final List<Card> deck = Card.getStandardDeck();
@@ -11,37 +10,34 @@ public class PokerGame {
     public PokerGame(int playerCount, int cardsInHand) {
         this.playerCount = playerCount;
         this.cardsInHand = cardsInHand;
-        pokerHands = new ArrayList<>(cardsInHand);
+        pokerHands = new ArrayList<>(playerCount);
     }
 
-    public void startPlay(){
+    public void startPlay() {
         Collections.shuffle(deck);
         Card.printDeck(deck);
-        int randomMiddle = new Random().nextInt(15, 35);
-        Collections.rotate(deck, randomMiddle);
+        int rnd = new Random().nextInt(15,35);
+        Collections.rotate(deck, rnd);
         Card.printDeck(deck);
+
         deal();
         System.out.println("---------------------");
-        Consumer<PokerHand> checkHand = PokerHand::evalHand;
-        pokerHands.forEach(checkHand.andThen(System.out::println));
+        pokerHands.forEach(PokerHand::evalHand);
+        PokerHand.registerGame(pokerHands);
+        pokerHands.forEach(System.out::println);
 
-        int cardsDealt = playerCount * cardsInHand;
-        int cardsRemaining = deck.size() - cardsDealt;
-        remainingCards = new ArrayList<>(Collections.nCopies(cardsRemaining, null));
-        remainingCards.replaceAll(c -> deck.get(cardsDealt + remainingCards.indexOf(c)));
+        int dealt = playerCount*cardsInHand;
+        remainingCards = new ArrayList<>(deck.subList(dealt, deck.size()));
         Card.printDeck(remainingCards, "Remaining Cards", 2);
     }
 
-    private void deal(){
-        Card[][] hands = new Card[playerCount][cardsInHand];
-        for(int deckIndex = 0, i = 0; i < cardsInHand; i++ ){
-            for(int j = 0; j < playerCount; j++){
-                hands[j][i] = deck.get(deckIndex++);
+    private void deal() {
+        for (int p=1; p<=playerCount; p++) {
+            List<Card> hand = new ArrayList<>();
+            for (int i=0; i<cardsInHand; i++) {
+                hand.add(deck.remove(0));
             }
-        }
-        int playerNo = 1;
-        for(Card[] hand : hands){
-            pokerHands.add(new PokerHand(Arrays.<Card>asList(hand), playerNo++));
+            pokerHands.add(new PokerHand(hand, p));
         }
     }
 }
